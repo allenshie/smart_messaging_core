@@ -1,0 +1,15 @@
+[project]
+name = "smart-messaging-core"
+version = "0.1.0"
+description = "Messaging helpers (MQTT) for edge/integration services."
+requires-python = ">=3.10"
+dependencies = [
+  "paho-mqtt>=1.6.1",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
