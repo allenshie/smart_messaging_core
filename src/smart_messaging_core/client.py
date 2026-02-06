@@ -5,8 +5,9 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from smart_messaging_core.protocols.http import HttpConfig, HttpPublisher
-from smart_messaging_core.protocols.mqtt import MqttConfig, MqttPublisher, MqttSubscriber
+from smart_messaging_core.protocols.http import HttpConfig
+from smart_messaging_core.protocols.mqtt import MqttConfig
+from smart_messaging_core.registry import PUBLISHERS, SUBSCRIBERS
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,21 +34,20 @@ class MessagingClient:
         if backend == "none":
             return False
         try:
-            if backend == "mqtt":
-                publisher = self._publishers.get(topic)
-                if publisher is None:
-                    publisher = MqttPublisher(self._config.mqtt, topic=topic)
-                    self._publishers[topic] = publisher
-                return publisher.publish(payload)
-            if backend == "http":
-                publisher = self._publishers.get("http")
-                if publisher is None:
-                    if self._config.http is None:
-                        raise ValueError("HTTP publish requires http config")
-                    publisher = HttpPublisher(self._config.http, topic_routes=self._config.topic_routes)
-                    self._publishers["http"] = publisher
-                return publisher.publish(topic, payload)
-            raise ValueError(f"Unsupported publish backend: {backend}")
+            entry = PUBLISHERS.get(backend)
+            if entry is None:
+                raise ValueError(f"Unsupported publish backend: {backend}")
+            config_cls, publisher_cls = entry
+            publisher_key = backend if backend != "mqtt" else topic
+            publisher = self._publishers.get(publisher_key)
+            if publisher is None:
+                cfg = self._resolve_publish_config(backend, config_cls)
+                if backend == "http":
+                    publisher = publisher_cls(cfg, topic_routes=self._config.topic_routes)
+                else:
+                    publisher = publisher_cls(cfg, topic=topic)
+                self._publishers[publisher_key] = publisher
+            return publisher.publish(payload) if backend == "mqtt" else publisher.publish(topic, payload)
         except Exception as exc:  # pylint: disable=broad-except
             self._handle_error("publish", backend, exc)
             return False
@@ -57,16 +57,33 @@ class MessagingClient:
         if backend == "none":
             return
         try:
-            if backend != "mqtt":
+            entry = SUBSCRIBERS.get(backend)
+            if entry is None:
                 raise ValueError(f"Unsupported subscribe backend: {backend}")
             if topic in self._subscribers:
                 return
-            subscriber = MqttSubscriber(self._config.mqtt, topic=topic, on_message=handler)
+            config_cls, subscriber_cls = entry
+            cfg = self._resolve_subscribe_config(backend, config_cls)
+            subscriber = subscriber_cls(cfg, topic=topic, on_message=handler)
             subscriber.start()
             self._subscribers[topic] = subscriber
         except Exception as exc:  # pylint: disable=broad-except
             self._handle_error("subscribe", backend, exc)
             return
+
+    def _resolve_publish_config(self, backend: str, config_cls: type) -> Any:
+        if backend == "mqtt":
+            return self._config.mqtt
+        if backend == "http":
+            if self._config.http is None:
+                raise ValueError("HTTP publish requires http config")
+            return self._config.http
+        raise ValueError(f"Missing publish config for backend: {backend}")
+
+    def _resolve_subscribe_config(self, backend: str, config_cls: type) -> Any:
+        if backend == "mqtt":
+            return self._config.mqtt
+        raise ValueError(f"Missing subscribe config for backend: {backend}")
 
     def _handle_error(self, action: str, backend: str, exc: Exception) -> None:
         mode = (self._config.failure_mode or "degraded").strip().lower()

@@ -2,6 +2,7 @@
 from .client import MessagingClient, MessagingConfig
 from .protocols.http import HttpConfig, HttpPublisher
 from .protocols.mqtt import MqttConfig, MqttPublisher, MqttSubscriber
+from .registry import PUBLISHERS, SUBSCRIBERS
 
 __all__ = [
     "MessagingClient",
@@ -11,4 +12,6 @@ __all__ = [
     "MqttConfig",
     "MqttPublisher",
     "MqttSubscriber",
+    "PUBLISHERS",
+    "SUBSCRIBERS",
 ]
