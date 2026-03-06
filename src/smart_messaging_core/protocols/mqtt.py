@@ -17,6 +17,9 @@ class MqttConfig:
     retain: bool = True
     client_id: str | None = None
     keepalive: int = 60
+    auth_enabled: bool = False
+    username: str | None = None
+    password: str | None = None
 
 
 class MqttPublisher:
@@ -47,6 +50,7 @@ class MqttPublisher:
         except ModuleNotFoundError as exc:
             raise RuntimeError("Missing dependency: paho-mqtt") from exc
         client = mqtt.Client(client_id=self._config.client_id)
+        _apply_auth(client, self._config)
         client.connect(self._config.host, self._config.port, keepalive=self._config.keepalive)
         client.loop_start()
         self._client = client
@@ -71,6 +75,11 @@ class MqttSubscriber:
             LOGGER.warning("MQTT subscriber disabled: %s", exc)
             return
         client = mqtt.Client(client_id=self._config.client_id)
+        try:
+            _apply_auth(client, self._config)
+        except ValueError as exc:
+            LOGGER.warning("MQTT subscriber auth config invalid: %s", exc)
+            return
         client.on_connect = self._handle_connect
         client.on_message = self._handle_message
         # Do not crash the service if the broker is temporarily unavailable.
@@ -100,3 +109,11 @@ class MqttSubscriber:
         if not isinstance(payload, dict):
             return
         self._on_message(payload)
+
+
+def _apply_auth(client, config: MqttConfig) -> None:  # noqa: ANN001
+    if not config.auth_enabled:
+        return
+    if not config.username:
+        raise ValueError("mqtt auth enabled but username is empty")
+    client.username_pw_set(config.username, config.password)

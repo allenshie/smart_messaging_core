@@ -1,6 +1,0 @@
-Metadata-Version: 2.4
-Name: smart-messaging-core
-Version: 0.1.0
-Summary: Messaging helpers (MQTT) for edge/integration services.
-Requires-Python: >=3.10
-Requires-Dist: paho-mqtt>=1.6.1

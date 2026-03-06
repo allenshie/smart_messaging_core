@@ -25,3 +25,17 @@ subscriber = MqttSubscriber(
 )
 subscriber.start()
 ```
+
+## 啟用帳密（可選）
+
+```python
+cfg = MqttConfig(
+    host="localhost",
+    port=1883,
+    qos=1,
+    retain=True,
+    auth_enabled=True,
+    username="mqtt_user",
+    password="mqtt_password",
+)
+```

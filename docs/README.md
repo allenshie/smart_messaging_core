@@ -10,7 +10,13 @@ from smart_messaging_core import MessagingClient, MessagingConfig, MqttConfig
 cfg = MessagingConfig(
     publish_backend="mqtt",
     subscribe_backend="mqtt",
-    mqtt=MqttConfig(host="localhost", port=1883, qos=1, retain=True),
+    mqtt=MqttConfig(
+        host="localhost",
+        port=1883,
+        qos=1,
+        retain=True,
+        # auth_enabled=True, username="mqtt_user", password="mqtt_password",
+    ),
 )
 
 client = MessagingClient(cfg)
