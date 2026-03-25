@@ -1,32 +1,32 @@
-# MQTT 使用範例
+# MQTT 使用說明
 
-## Publisher
+## 支援能力
 
-```python
-from smart_messaging_core import MqttConfig, MqttPublisher
+- publish
+- subscribe
 
-cfg = MqttConfig(host="localhost", port=1883, qos=1, retain=True)
-publisher = MqttPublisher(cfg, topic="integration/phase")
-
-publisher.publish({"phase": "working_stage_1"})
-```
-
-## Subscriber
+## 最小設定
 
 ```python
-from smart_messaging_core import MqttConfig, MqttSubscriber
+from smart_messaging_core import MqttConfig, MqttClient
 
 cfg = MqttConfig(host="localhost", port=1883, qos=1, retain=True)
-
-subscriber = MqttSubscriber(
-    cfg,
-    topic="integration/phase",
-    on_message=lambda payload: print(payload),
-)
-subscriber.start()
+client = MqttClient(cfg)
 ```
 
-## 啟用帳密（可選）
+## Publish
+
+```python
+client.publish("integration/phase", {"phase": "working_stage_1"})
+```
+
+## Subscribe
+
+```python
+client.subscribe("integration/phase", lambda payload: print(payload))
+```
+
+## 帳密（可選）
 
 ```python
 cfg = MqttConfig(
@@ -38,4 +38,11 @@ cfg = MqttConfig(
     username="mqtt_user",
     password="mqtt_password",
 )
+```
+
+## 測試腳本
+
+```bash
+source .venv/bin/activate
+python scripts/test_mqtt_pubsub.py
 ```

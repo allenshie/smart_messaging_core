@@ -1,21 +1,17 @@
 """Protocol registry for smart_messaging_core."""
 from __future__ import annotations
 
-from typing import Dict, Tuple, Type, Any
+from typing import Any
 
-from smart_messaging_core.protocols.http import HttpConfig, HttpPublisher
-from smart_messaging_core.protocols.mqtt import MqttConfig, MqttPublisher, MqttSubscriber
-
-
-PublisherEntry = Tuple[Type[Any], Type[Any]]
-SubscriberEntry = Tuple[Type[Any], Type[Any]]
+from smart_messaging_core.protocols.http import HttpClient, HttpConfig
+from smart_messaging_core.protocols.kafka import KafkaClient, KafkaConfig
+from smart_messaging_core.protocols.mqtt import MqttClient, MqttConfig
+from smart_messaging_core.protocols.redis import RedisClient, RedisConfig
 
 
-PUBLISHERS: Dict[str, PublisherEntry] = {
-    "mqtt": (MqttConfig, MqttPublisher),
-    "http": (HttpConfig, HttpPublisher),
-}
-
-SUBSCRIBERS: Dict[str, SubscriberEntry] = {
-    "mqtt": (MqttConfig, MqttSubscriber),
+CLIENTS: dict[str, tuple[str, type[Any], type[Any]]] = {
+    "mqtt": ("mqtt", MqttConfig, MqttClient),
+    "http": ("http", HttpConfig, HttpClient),
+    "kafka": ("kafka", KafkaConfig, KafkaClient),
+    "redis": ("redis", RedisConfig, RedisClient),
 }

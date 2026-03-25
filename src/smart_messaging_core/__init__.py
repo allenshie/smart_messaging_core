@@ -1,17 +1,37 @@
 """Public exports for smart_messaging_core."""
-from .client import MessagingClient, MessagingConfig
-from .protocols.http import HttpConfig, HttpPublisher
-from .protocols.mqtt import MqttConfig, MqttPublisher, MqttSubscriber
-from .registry import PUBLISHERS, SUBSCRIBERS
+from .base import BaseProtocolClient, BaseProtocolConfig
+from .client import MessagingClient, MessagingConfig, RouteConfig
+from .protocols import (
+    HttpClient,
+    HttpConfig,
+    HttpPublisher,
+    KafkaClient,
+    KafkaConfig,
+    MqttClient,
+    MqttConfig,
+    MqttPublisher,
+    MqttSubscriber,
+    RedisClient,
+    RedisConfig,
+)
+from .registry import CLIENTS
 
 __all__ = [
+    "BaseProtocolClient",
+    "BaseProtocolConfig",
     "MessagingClient",
     "MessagingConfig",
+    "RouteConfig",
+    "HttpClient",
     "HttpConfig",
     "HttpPublisher",
+    "KafkaClient",
+    "KafkaConfig",
+    "MqttClient",
     "MqttConfig",
     "MqttPublisher",
     "MqttSubscriber",
-    "PUBLISHERS",
-    "SUBSCRIBERS",
+    "RedisClient",
+    "RedisConfig",
+    "CLIENTS",
 ]

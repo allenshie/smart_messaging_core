@@ -1,10 +1,20 @@
 def test_imports() -> None:
     from smart_messaging_core import (  # noqa: F401
+        BaseProtocolClient,
+        BaseProtocolConfig,
+        CLIENTS,
+        HttpClient,
+        HttpConfig,
+        HttpPublisher,
+        KafkaClient,
+        KafkaConfig,
         MessagingClient,
         MessagingConfig,
+        MqttClient,
         MqttConfig,
         MqttPublisher,
         MqttSubscriber,
-        HttpConfig,
-        HttpPublisher,
+        RedisClient,
+        RedisConfig,
+        RouteConfig,
     )
