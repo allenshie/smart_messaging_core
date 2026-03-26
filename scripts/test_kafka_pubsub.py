@@ -1,6 +1,7 @@
 """Kafka pub/sub smoke test (stabilized for consumer rebalance timing)."""
 from __future__ import annotations
 
+import os
 import threading
 import time
 import uuid
@@ -10,9 +11,11 @@ from smart_messaging_core import KafkaClient, KafkaConfig
 
 
 def main() -> None:
-    topic = "smart.messaging.demo"
+    topic = os.getenv("SMC_KAFKA_TOPIC", "smart.messaging.demo")
+    bootstrap_servers = os.getenv("SMC_KAFKA_BOOTSTRAP_SERVERS", "127.0.0.1:9092")
+    warmup_seconds = float(os.getenv("SMC_KAFKA_WARMUP_SECONDS", "5"))
     received = Event()
-    group_id = f"smart-messaging-core-demo-{uuid.uuid4().hex[:8]}"
+    group_id = os.getenv("SMC_KAFKA_GROUP_ID", f"smart-messaging-core-demo-{uuid.uuid4().hex[:8]}")
 
     def on_message(payload: dict) -> None:
         print(f"Kafka received payload: {payload}")
@@ -20,7 +23,7 @@ def main() -> None:
 
     client = KafkaClient(
         KafkaConfig(
-            bootstrap_servers="localhost:9092",
+            bootstrap_servers=bootstrap_servers,
             group_id=group_id,
             auto_offset_reset="earliest",
         )
@@ -31,7 +34,7 @@ def main() -> None:
         thread.start()
 
         # Wait for consumer group join/rebalance to settle before publishing.
-        time.sleep(5.0)
+        time.sleep(warmup_seconds)
 
         ok1 = client.publish(topic, {"message": "hello kafka #1"})
         time.sleep(1.0)

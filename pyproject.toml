@@ -2,11 +2,37 @@
 name = "smart-messaging-core"
 version = "0.1.0"
 description = "Messaging helpers for edge/integration services."
+readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
+authors = [
+  { name = "SmartWarehousing Team" },
+]
+keywords = ["messaging", "mqtt", "http", "kafka", "redis"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: System :: Networking",
+]
 dependencies = [
   "paho-mqtt>=1.6.1",
   "kafka-python>=2.0.2",
   "redis>=5.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/allenshie/smart_messaging_core"
+Repository = "https://github.com/allenshie/smart_messaging_core"
+Issues = "https://github.com/allenshie/smart_messaging_core/issues"
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2.2",
+  "twine>=5.1.1",
 ]
 
 [build-system]
@@ -15,3 +41,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
