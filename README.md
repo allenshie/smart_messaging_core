@@ -2,6 +2,17 @@
 
 可擴充的通訊核心套件，提供統一的 `MessagingClient` facade，並可依 route 將訊息導向不同協議。
 
+## PyPI 發佈狀態
+
+- 正式 PyPI：`smart-messaging-core==0.1.1`
+- 套件頁面：<https://pypi.org/project/smart-messaging-core/>
+
+安裝：
+
+```bash
+pip install smart-messaging-core==0.1.1
+```
+
 ## 目前支援的協議
 
 - `mqtt`: publish / subscribe
@@ -11,7 +22,7 @@
 
 註：`kafka` 與 `redis` 目前已提供 client/config 與文件、測試腳本骨架；若要實際連線驗證，需安裝對應套件並啟動外部服務。
 
-## 安裝（本機）
+## 安裝（本機開發）
 
 ```bash
 cd /home/allen/Documents/project/asia-bay/SmartWarehousing/test/smart_messaging_core

@@ -2,6 +2,17 @@
 
 `smart_messaging_core` 提供統一的 `MessagingClient`，由 route 設定選擇實際協議與 channel。
 
+## 發佈與版本
+
+- 正式 PyPI：`smart-messaging-core==0.1.1`
+- 套件頁面：<https://pypi.org/project/smart-messaging-core/>
+
+安裝：
+
+```bash
+pip install smart-messaging-core==0.1.1
+```
+
 ## Route-based 使用範例
 
 ```python
