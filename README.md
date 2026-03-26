@@ -13,6 +13,16 @@
 pip install smart-messaging-core==0.1.1
 ```
 
+## 本機開發
+
+```bash
+git clone https://github.com/allenshie/smart_messaging_core.git
+cd smart_messaging_core
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
 ## 目前支援的協議
 
 - `mqtt`: publish / subscribe
@@ -20,13 +30,31 @@ pip install smart-messaging-core==0.1.1
 - `kafka`: publish / subscribe
 - `redis`: publish / subscribe
 
-註：`kafka` 與 `redis` 目前已提供 client/config 與文件、測試腳本骨架；若要實際連線驗證，需安裝對應套件並啟動外部服務。
+## 推薦使用方式
 
-## 安裝（本機開發）
+對外建議統一使用 `MessagingClient`，由 `routes` 決定實際協議與目標位置。
 
-```bash
-cd /home/allen/Documents/project/asia-bay/SmartWarehousing/test/smart_messaging_core
-pip install -e .
+```python
+from smart_messaging_core import (
+    HttpConfig,
+    MessagingClient,
+    MessagingConfig,
+    MqttConfig,
+    RouteConfig,
+)
+
+cfg = MessagingConfig(
+    mqtt=MqttConfig(host="localhost", port=1883, qos=1, retain=True),
+    http=HttpConfig(base_url="http://localhost:8080"),
+    routes={
+        "phase_publish": RouteConfig(backend="http", channel="/phase"),
+        "edge_events": RouteConfig(backend="mqtt", channel="edge/events"),
+    },
+)
+
+client = MessagingClient(cfg)
+client.publish("phase_publish", {"phase": "working_stage_1"})
+client.subscribe("edge_events", lambda payload: print(payload))
 ```
 
 ## 文件

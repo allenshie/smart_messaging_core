@@ -10,32 +10,58 @@
 - 需先啟動 Kafka broker
 - 需安裝 `kafka-python`
 
-## 最小設定
+## 推薦使用方式
 
 ```python
-from smart_messaging_core import KafkaConfig, KafkaClient
+from smart_messaging_core import KafkaConfig, MessagingClient, MessagingConfig, RouteConfig
 
-cfg = KafkaConfig(bootstrap_servers="localhost:9092", group_id="demo-group")
-client = KafkaClient(cfg)
+cfg = MessagingConfig(
+    kafka=KafkaConfig(
+        bootstrap_servers="localhost:9092",
+        group_id="demo-group",
+        auto_offset_reset="earliest",
+    ),
+    routes={
+        "phase_publish": RouteConfig(backend="kafka", channel="integration.phase"),
+        "edge_events": RouteConfig(backend="kafka", channel="edge.events"),
+    },
+)
+
+client = MessagingClient(cfg)
+client.publish("phase_publish", {"phase": "working_stage_1"})
+client.subscribe("edge_events", lambda payload: print(payload))
 ```
 
-## Publish
+## 主要參數
 
-```python
-client.publish("integration.phase", {"phase": "working_stage_1"})
-```
+### `KafkaConfig`
 
-## Subscribe
+- `bootstrap_servers`
+  - 範例值：`"localhost:9092"`
+  - Kafka broker 位址
+- `client_id`
+  - 範例值：`"demo-client"`
+  - 可選的 client id
+- `group_id`
+  - 範例值：`"demo-group"`
+  - subscribe 使用的 consumer group
+- `auto_offset_reset`
+  - 範例值：`"earliest"`
+  - 初始 offset 策略
 
-```python
-client.subscribe("integration.phase", lambda payload: print(payload))
-```
+### `RouteConfig`
+
+- `backend`
+  - 範例值：`"kafka"`
+- `channel`
+  - 範例值：`"integration.phase"`
+  - Kafka topic 名稱
 
 ## 測試腳本
 
 ```bash
 source .venv/bin/activate
-python scripts/test_kafka_pubsub.py  # subscribe + publish + close
+python scripts/test_kafka_pubsub.py
 ```
 
 ## Docker image 版本參考

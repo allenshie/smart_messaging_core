@@ -10,32 +10,53 @@
 - 需先啟動 Redis server
 - 需安裝 `redis`
 
-## 最小設定
+## 推薦使用方式
 
 ```python
-from smart_messaging_core import RedisConfig, RedisClient
+from smart_messaging_core import MessagingClient, MessagingConfig, RedisConfig, RouteConfig
 
-cfg = RedisConfig(host="localhost", port=6379, db=0)
-client = RedisClient(cfg)
+cfg = MessagingConfig(
+    redis=RedisConfig(host="localhost", port=6379, db=0),
+    routes={
+        "phase_publish": RouteConfig(backend="redis", channel="integration:phase"),
+        "edge_events": RouteConfig(backend="redis", channel="edge:events"),
+    },
+)
+
+client = MessagingClient(cfg)
+client.publish("phase_publish", {"phase": "working_stage_1"})
+client.subscribe("edge_events", lambda payload: print(payload))
 ```
 
-## Publish
+## 主要參數
 
-```python
-client.publish("integration:phase", {"phase": "working_stage_1"})
-```
+### `RedisConfig`
 
-## Subscribe
+- `host`
+  - 範例值：`"localhost"`
+  - Redis host
+- `port`
+  - 範例值：`6379`
+  - Redis port
+- `db`
+  - 範例值：`0`
+  - Redis database index
+- `username` / `password`
+  - Redis 驗證資訊，可選
 
-```python
-client.subscribe("integration:phase", lambda payload: print(payload))
-```
+### `RouteConfig`
+
+- `backend`
+  - 範例值：`"redis"`
+- `channel`
+  - 範例值：`"integration:phase"`
+  - Redis pub/sub channel 名稱
 
 ## 測試腳本
 
 ```bash
 source .venv/bin/activate
-python scripts/test_redis_pubsub.py  # subscribe + publish + close
+python scripts/test_redis_pubsub.py
 ```
 
 ## Docker image 版本參考

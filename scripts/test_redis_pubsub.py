@@ -1,4 +1,4 @@
-"""Redis pub/sub smoke test."""
+"""Redis pub/sub smoke test via MessagingClient."""
 from __future__ import annotations
 
 import os
@@ -6,7 +6,9 @@ import threading
 import time
 from threading import Event
 
-from smart_messaging_core import RedisClient, RedisConfig
+from smart_messaging_core import MessagingClient, MessagingConfig, RedisConfig, RouteConfig
+
+ROUTE_KEY = "redis_demo"
 
 
 def main() -> None:
@@ -20,13 +22,18 @@ def main() -> None:
         print(f"Redis received payload: {payload}")
         received.set()
 
-    client = RedisClient(RedisConfig(host=host, port=port, db=db))
+    client = MessagingClient(
+        MessagingConfig(
+            redis=RedisConfig(host=host, port=port, db=db),
+            routes={ROUTE_KEY: RouteConfig(backend="redis", channel=channel)},
+        )
+    )
 
     try:
-        thread = threading.Thread(target=lambda: client.subscribe(channel, on_message), daemon=True)
+        thread = threading.Thread(target=lambda: client.subscribe(ROUTE_KEY, on_message), daemon=True)
         thread.start()
         time.sleep(0.5)
-        ok = client.publish(channel, {"message": "hello redis"})
+        ok = client.publish(ROUTE_KEY, {"message": "hello redis"})
         print(f"Redis publish returned: {ok}")
         print(f"Redis subscribe received: {received.wait(timeout=5)}")
     finally:

@@ -1,11 +1,13 @@
-"""HTTP pub/sub smoke test using local webhook loopback."""
+"""HTTP pub/sub smoke test using local webhook loopback via MessagingClient."""
 from __future__ import annotations
 
 import os
 import time
 from threading import Event
 
-from smart_messaging_core import HttpClient, HttpConfig
+from smart_messaging_core import HttpConfig, MessagingClient, MessagingConfig, RouteConfig
+
+ROUTE_KEY = "http_demo"
 
 
 def main() -> None:
@@ -21,18 +23,22 @@ def main() -> None:
         print(f"HTTP received payload: {payload}")
         received.set()
 
-    cfg = HttpConfig(
-        base_url=base_url,
-        listen_host=listen_host,
-        listen_port=listen_port,
-        timeout_seconds=timeout_seconds,
+    client = MessagingClient(
+        MessagingConfig(
+            http=HttpConfig(
+                base_url=base_url,
+                listen_host=listen_host,
+                listen_port=listen_port,
+                timeout_seconds=timeout_seconds,
+            ),
+            routes={ROUTE_KEY: RouteConfig(backend="http", channel=endpoint)},
+        )
     )
-    client = HttpClient(cfg)
 
     try:
-        client.subscribe(endpoint, on_message)
+        client.subscribe(ROUTE_KEY, on_message)
         time.sleep(0.2)
-        ok = client.publish(endpoint, {"message": "hello http"})
+        ok = client.publish(ROUTE_KEY, {"message": "hello http"})
         print(f"HTTP publish returned: {ok}")
         print(f"HTTP subscribe received: {received.wait(timeout=3)}")
     finally:

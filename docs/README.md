@@ -13,14 +13,14 @@
 pip install smart-messaging-core==0.1.1
 ```
 
-## Route-based 使用範例
+## 基本使用
 
 ```python
 from smart_messaging_core import (
+    HttpConfig,
     MessagingClient,
     MessagingConfig,
     MqttConfig,
-    HttpConfig,
     RouteConfig,
 )
 
@@ -39,6 +39,62 @@ client.publish("phase_publish", {"phase": "working_stage_1"})
 client.publish("board_command", {"command_code": "0x32", "message": "減速慢行"})
 client.subscribe("edge_events", lambda payload: print(payload))
 ```
+
+## Route Key
+
+```python
+routes = {
+    ROUTE_KEY: RouteConfig(
+        backend=BACKEND_TYPE,
+        channel=CHANNEL,
+    )
+}
+```
+
+- `ROUTE_KEY`
+  - 路由名稱，由應用端自定義
+  - 用於 `publish()` / `subscribe()` 指定要使用哪條路由
+- `BACKEND_TYPE`
+  - 該路由使用的通訊協議
+  - 例如：`"mqtt"`、`"http"`、`"redis"`、`"kafka"`
+- `CHANNEL`
+  - 該協議對應的實際目標位置
+  - MQTT: topic
+  - Redis: pub/sub channel
+  - Kafka: topic
+  - HTTP: path
+
+範例：
+
+```python
+routes = {
+    "phase_publish": RouteConfig(backend="http", channel="/phase"),
+    "edge_events": RouteConfig(backend="mqtt", channel="edge/events"),
+}
+```
+
+## 主要參數
+
+### `MessagingConfig`
+
+- `failure_mode`
+  - 預設：`"degraded"`
+  - `"degraded"` 失敗只記錄 log，`"strict"` 直接 raise
+- `routes`
+  - route key 對應表
+  - 每個 key 對應一個 `RouteConfig`
+- `mqtt` / `http` / `kafka` / `redis`
+  - 對應 backend 的協議設定
+  - 若 route 使用該 backend，需提供正確 config 類型
+
+### `RouteConfig`
+
+- `backend`
+  - 範例值：`"mqtt"`
+  - 說明：該 route 使用的協議類型
+- `channel`
+  - 範例值：`"edge/events"`、`"/phase"`
+  - 說明：協議實際目標位置
 
 ## failure_mode
 
