@@ -44,5 +44,15 @@ cfg = MqttConfig(
 
 ```bash
 source .venv/bin/activate
-python scripts/test_mqtt_pubsub.py
+python scripts/test_mqtt_pubsub.py  # subscribe + publish + close
+```
+
+## Docker image 版本參考
+
+- image：`eclipse-mosquitto:2.0`
+
+啟動指令：
+
+```bash
+docker run -d --name smart-msg-mqtt -p 1883:1883 eclipse-mosquitto:2.0
 ```

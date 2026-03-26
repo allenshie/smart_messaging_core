@@ -1,10 +1,12 @@
 [project]
 name = "smart-messaging-core"
 version = "0.1.0"
-description = "Messaging helpers (MQTT) for edge/integration services."
+description = "Messaging helpers for edge/integration services."
 requires-python = ">=3.10"
 dependencies = [
   "paho-mqtt>=1.6.1",
+  "kafka-python>=2.0.2",
+  "redis>=5.0.0",
 ]
 
 [build-system]

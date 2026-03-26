@@ -35,5 +35,15 @@ client.subscribe("integration:phase", lambda payload: print(payload))
 
 ```bash
 source .venv/bin/activate
-python scripts/test_redis_pubsub.py
+python scripts/test_redis_pubsub.py  # subscribe + publish + close
+```
+
+## Docker image 版本參考
+
+- image：`redis:7.2-alpine`
+
+啟動指令：
+
+```bash
+docker run -d --name smart-msg-redis -p 6379:6379 redis:7.2-alpine
 ```

@@ -63,15 +63,20 @@ client.publish("phase_publish", {"phase": "working"})
 - subscribe 後會在背景執行本地 webhook server。
 - 使用完成請呼叫 `client.close()` 釋放資源與 listen port。
 
-## 簡易 server 架設說明
-
-若使用 subscribe，不需額外手動啟動 Flask/FastAPI server；`HttpClient.subscribe(...)` 會自動啟動內建 webhook server。
-
-若只使用 publish，僅需確保 `base_url` 指向可接收 POST 的目標 API。
-
 ## 測試腳本
 
 ```bash
 source .venv/bin/activate
-python scripts/test_http_publish.py
+python scripts/test_http_publish.py  # subscribe + publish + close
+```
+
+## Docker image 版本參考
+
+- 本機 loopback 測試：不需要額外 image（腳本會自啟 webhook server）
+- 若只驗證 publish 對外 API，可選 image：`kennethreitz/httpbin`
+
+啟動指令（可選，僅測 publish 外部 API）：
+
+```bash
+docker run -d --name smart-msg-httpbin -p 8080:80 kennethreitz/httpbin
 ```
