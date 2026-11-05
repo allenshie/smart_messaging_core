@@ -62,6 +62,10 @@ class MqttClient(BaseProtocolClient):
         if getattr(client, "is_connected", lambda: False)():
             client.subscribe(channel, qos=self._config.qos)
 
+    def connect(self) -> None:
+        """開始背景連線，不等待連線完成。"""
+        self._ensure_client()
+
     def is_connected(self) -> bool:
         return self._client is not None and self._client.is_connected()
 

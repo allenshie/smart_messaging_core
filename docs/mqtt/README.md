@@ -64,8 +64,9 @@ client.subscribe("edge_events", lambda payload: print(payload))
 
 ## 連線行為
 
-- 第一次 publish 或 subscribe 時建立 client，連線與重連都在 paho 的背景執行緒進行（間隔 1 到 30 秒），不會卡住呼叫端。
-- 尚未連上時，publish 立刻回傳 `False`。QoS 0 的訊息會直接丟棄，所以啟動後的第一則訊息可能送不出去；QoS 1 以上會排隊，上限為 `max_queued_messages`。
+- 建立 `MessagingClient` 時，只要路由有用到 MQTT 就開始連線。連線與重連都在 paho 的背景執行緒進行（間隔 1 到 30 秒），不會卡住呼叫端。
+- 尚未連上時，publish 立刻回傳 `False`。QoS 0 的訊息會直接丟棄，所以剛建立就馬上 publish 仍可能失敗；QoS 1 以上會排隊，上限為 `max_queued_messages`。
+- 同一個 `client_id` 只能有一條連線。建立多個 `MessagingClient` 時，不要讓它們設定相同的 `client_id`，否則 broker 會讓它們互相踢線。
 - 重連後會自動重新訂閱。
 - `MessagingClient.is_connected(route_key)` 回傳該路由的連線狀態；backend 沒有連線狀態或路由無效時回傳 `None`。
 - 連線失敗時會輸出 WARNING：連不上時包含 broker 位址，broker 拒絕時（例如帳密錯誤）包含 `rc`。

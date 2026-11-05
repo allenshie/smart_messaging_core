@@ -226,3 +226,70 @@ class MessagingClientConnectionTests(TestCase):
 
     def test_unknown_route_returns_none_in_degraded_mode(self) -> None:
         self.assertIsNone(self.client.is_connected("missing"))
+
+
+class EagerConnectionTests(TestCase):
+    """建立 MessagingClient 時就開始連線。"""
+
+    def _messaging(self, routes: dict[str, RouteConfig], **mqtt) -> MessagingClient:
+        client = MessagingClient(
+            MessagingConfig(
+                mqtt=MqttConfig(host="127.0.0.1", qos=0, **mqtt),
+                http=HttpConfig(base_url="http://localhost:8080"),
+                routes=routes,
+            )
+        )
+        self.addCleanup(client.close)
+        return client
+
+    def test_mqtt_route_connects_without_any_publish(self) -> None:
+        port = _free_port()
+        broker = FakeBroker(port)
+        self.addCleanup(broker.stop)
+
+        client = self._messaging(
+            {"board": RouteConfig(backend="mqtt", channel="board/command")}, port=port
+        )
+
+        self.assertTrue(_wait_until(lambda: client.is_connected("board") is True))
+
+    def test_first_publish_is_delivered_after_startup_connection(self) -> None:
+        port = _free_port()
+        broker = FakeBroker(port)
+        self.addCleanup(broker.stop)
+        client = self._messaging(
+            {"board": RouteConfig(backend="mqtt", channel="board/command")}, port=port
+        )
+        self.assertTrue(_wait_until(lambda: client.is_connected("board") is True))
+
+        self.assertTrue(client.publish("board", {"command": "first"}))
+
+        self.assertTrue(_wait_until(lambda: broker.published == [{"command": "first"}]))
+
+    def test_creation_does_not_wait_for_unreachable_broker(self) -> None:
+        def slow_timeout(*_args, **_kwargs):
+            time.sleep(1.0)
+            raise TimeoutError("timed out")
+
+        with mock.patch("socket.create_connection", side_effect=slow_timeout):
+            started = time.monotonic()
+            self._messaging({"board": RouteConfig(backend="mqtt", channel="board/command")})
+            elapsed = time.monotonic() - started
+
+        self.assertLess(elapsed, 0.5)
+
+    def test_routes_without_mqtt_do_not_open_a_connection(self) -> None:
+        with mock.patch("socket.create_connection") as create_connection:
+            self._messaging({"api": RouteConfig(backend="http", channel="/edge/events")})
+            time.sleep(0.2)
+
+        create_connection.assert_not_called()
+
+    def test_auth_misconfiguration_is_reported_not_raised_in_degraded_mode(self) -> None:
+        with self.assertLogs("smart_messaging_core.client", level="WARNING") as captured:
+            self._messaging(
+                {"board": RouteConfig(backend="mqtt", channel="board/command")},
+                auth_enabled=True,
+            )
+
+        self.assertIn("username is empty", "\n".join(captured.output))

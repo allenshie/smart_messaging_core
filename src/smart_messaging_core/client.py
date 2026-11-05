@@ -36,6 +36,7 @@ class MessagingClient:
     def __init__(self, config: MessagingConfig) -> None:
         self._config = config
         self._clients: dict[str, Any] = {}
+        self._connect_routes()
 
     def publish(self, route_key: str, payload: dict[str, Any]) -> bool:
         try:
@@ -77,6 +78,17 @@ class MessagingClient:
             except Exception as exc:  # pylint: disable=broad-except
                 LOGGER.warning("Messaging close failed (backend=%s): %s", backend, exc)
         self._clients.clear()
+
+    def _connect_routes(self) -> None:
+        """讓需要持續連線的 backend 在啟動時就開始連線，避免第一則訊息因尚未連上而失敗。"""
+        for route_key, route in self._config.routes.items():
+            entry = CLIENTS.get((route.backend or "").strip().lower())
+            if entry is None or not hasattr(entry[2], "connect"):
+                continue
+            try:
+                self._get_client(route.backend).connect()
+            except Exception as exc:  # pylint: disable=broad-except
+                self._handle_error("connect", route_key, exc)
 
     def _resolve_route(self, route_key: str) -> tuple[str, str]:
         route = self._config.routes.get(route_key)
