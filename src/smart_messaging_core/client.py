@@ -58,6 +58,16 @@ class MessagingClient:
         except Exception as exc:  # pylint: disable=broad-except
             self._handle_error("subscribe", route_key, exc)
 
+    def is_connected(self, route_key: str) -> bool | None:
+        """回傳路由 backend 的連線狀態；backend 沒有連線狀態或路由無效時回傳 None。"""
+        try:
+            backend, _ = self._resolve_route(route_key)
+            check = getattr(self._get_client(backend), "is_connected", None)
+            return check() if callable(check) else None
+        except Exception as exc:  # pylint: disable=broad-except
+            self._handle_error("is_connected", route_key, exc)
+            return None
+
     def close(self) -> None:
         for backend, client in list(self._clients.items()):
             try:

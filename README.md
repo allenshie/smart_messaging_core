@@ -4,7 +4,7 @@
 
 ## PyPI 發佈狀態
 
-- 正式 PyPI：`smart-messaging-core==0.1.1`
+- 正式 PyPI：`smart-messaging-core==0.1.2`
 - 套件頁面：<https://pypi.org/project/smart-messaging-core/>
 
 安裝：

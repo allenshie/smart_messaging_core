@@ -50,6 +50,9 @@ client.subscribe("edge_events", lambda payload: print(payload))
   - 是否啟用帳密登入
 - `username` / `password`
   - MQTT broker 帳號密碼
+- `max_queued_messages`
+  - 範例值：`1000`
+  - QoS 1 以上斷線時最多保留的訊息數，超過時 publish 回傳 `False`；`0` 代表不限制
 
 ### `RouteConfig`
 
@@ -58,6 +61,14 @@ client.subscribe("edge_events", lambda payload: print(payload))
 - `channel`
   - 範例值：`"integration/phase"`
   - MQTT topic 名稱
+
+## 連線行為
+
+- 第一次 publish 或 subscribe 時建立 client，連線與重連都在 paho 的背景執行緒進行（間隔 1 到 30 秒），不會卡住呼叫端。
+- 尚未連上時，publish 立刻回傳 `False`。QoS 0 的訊息會直接丟棄，所以啟動後的第一則訊息可能送不出去；QoS 1 以上會排隊，上限為 `max_queued_messages`。
+- 重連後會自動重新訂閱。
+- `MessagingClient.is_connected(route_key)` 回傳該路由的連線狀態；backend 沒有連線狀態或路由無效時回傳 `None`。
+- 連線失敗時會輸出 WARNING：連不上時包含 broker 位址，broker 拒絕時（例如帳密錯誤）包含 `rc`。
 
 ## 帳密（可選）
 

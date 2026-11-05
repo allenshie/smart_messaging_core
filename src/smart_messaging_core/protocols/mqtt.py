@@ -22,6 +22,7 @@ class MqttConfig(BaseProtocolConfig):
     auth_enabled: bool = False
     username: str | None = None
     password: str | None = None
+    max_queued_messages: int = 1000
 
 
 class MqttClient(BaseProtocolClient):
@@ -38,7 +39,7 @@ class MqttClient(BaseProtocolClient):
 
     def publish(self, channel: str, payload: dict[str, object]) -> bool:
         try:
-            client = self._ensure_client(connect_async=False)
+            client = self._ensure_client()
         except Exception as exc:  # pylint: disable=broad-except
             LOGGER.warning("MQTT publish client init failed: %s", exc)
             return False
@@ -52,7 +53,7 @@ class MqttClient(BaseProtocolClient):
 
     def subscribe(self, channel: str, handler: Callable[[dict[str, object]], None]) -> None:
         try:
-            client = self._ensure_client(connect_async=True)
+            client = self._ensure_client()
         except Exception as exc:  # pylint: disable=broad-except
             LOGGER.warning("MQTT subscribe client init failed: %s", exc)
             return
@@ -61,7 +62,10 @@ class MqttClient(BaseProtocolClient):
         if getattr(client, "is_connected", lambda: False)():
             client.subscribe(channel, qos=self._config.qos)
 
-    def _ensure_client(self, connect_async: bool):
+    def is_connected(self) -> bool:
+        return self._client is not None and self._client.is_connected()
+
+    def _ensure_client(self):
         if self._client is not None:
             return self._client
         try:
@@ -70,14 +74,13 @@ class MqttClient(BaseProtocolClient):
             raise RuntimeError("Missing dependency: paho-mqtt") from exc
         client = mqtt.Client(client_id=self._config.client_id)
         _apply_auth(client, self._config)
+        client.max_queued_messages_set(self._config.max_queued_messages)
         client.on_connect = self._handle_connect
-        if connect_async:
-            client.reconnect_delay_set(min_delay=1, max_delay=30)
-            client.connect_async(self._config.host, self._config.port, keepalive=self._config.keepalive)
-            client.loop_start()
-        else:
-            client.connect(self._config.host, self._config.port, keepalive=self._config.keepalive)
-            client.loop_start()
+        client.on_connect_fail = self._handle_connect_fail
+        # 連線與重連都交給 paho 的背景執行緒，publish 不會等待連線。
+        client.reconnect_delay_set(min_delay=1, max_delay=30)
+        client.connect_async(self._config.host, self._config.port, keepalive=self._config.keepalive)
+        client.loop_start()
         self._client = client
         return client
 
@@ -102,6 +105,10 @@ class MqttClient(BaseProtocolClient):
             return
         for channel in self._subscriptions:
             client.subscribe(channel, qos=self._config.qos)
+
+    def _handle_connect_fail(self, client, userdata):  # noqa: ANN001
+        _ = (client, userdata)
+        LOGGER.warning("MQTT connect failed: %s:%s", self._config.host, self._config.port)
 
     @staticmethod
     def _build_message_handler(handler: Callable[[dict[str, object]], None]):
